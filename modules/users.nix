@@ -1,5 +1,12 @@
 { pkgs, ... }:
 {
+  users.users."cecile" = {
+    isNormalUser = true;
+    description = "Cécile";
+    home = "/home/cecile";
+    shell = pkgs.bash;
+  };
+
   users.users."qt1" = {
     isNormalUser = true;
     description = "Quentin";

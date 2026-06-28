@@ -47,7 +47,8 @@
       };
 
       outputs."DP-1" = {
-        mode = { width = 3440; height = 1440; refresh = 144.0; };
+        mode  = { width = 3440; height = 1440; refresh = 144.0; };
+        scale = 1.2;
       };
 
       layout = {
@@ -59,6 +60,8 @@
           { proportion = 1.0; }
         ];
       };
+
+      hotkey-overlay.skip-at-startup = true;
 
       animations = { };
 

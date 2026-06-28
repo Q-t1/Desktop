@@ -2,6 +2,7 @@
   imports = [
     ./disk-config.nix
     ../../modules/audio.nix
+    ../../modules/avatars.nix
     ../../modules/graphics.nix
     ../../modules/locale.nix
     ../../modules/networking.nix

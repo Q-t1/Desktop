@@ -4,7 +4,7 @@
     ../../modules/home/niri.nix
     ../../modules/home/dms.nix
     ../../modules/home/firefox.nix
-    ../../modules/home/must-haves.nix
+    ../../modules/home/session.nix
   ];
 
   home = {

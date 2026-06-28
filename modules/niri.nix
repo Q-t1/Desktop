@@ -9,6 +9,9 @@
   programs.dank-material-shell.greeter.compositor = {
     name = "niri";
     customConfig = ''
+      hotkey-overlay {
+        skip-at-startup
+      }
       input {
         keyboard {
           xkb {
@@ -18,6 +21,7 @@
       }
       output "DP-1" {
         mode "3440x1440@144.000"
+        scale 1.2
       }
     '';
   };

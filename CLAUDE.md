@@ -50,7 +50,7 @@ The flake exposes a single `nixosConfigurations.desktop` output, built via the `
 - `modules/home/niri.nix` — niri settings (keybinds, 144Hz output, environment, layout) via `niri-flake` home module
 - `modules/home/dms.nix` — DankMaterialShell config (dark theme, dynamic theming, wallpaperCarousel plugin)
 - `modules/home/firefox.nix` — Firefox home config
-- `modules/home/must-haves.nix` — polkit agent, hypridle lock/screen-off
+- `modules/home/session.nix` — polkit agent, hypridle lock/screen-off
 
 DMS (`spawn-at-startup "dms" "run"`) is started automatically by niri at login.
 
