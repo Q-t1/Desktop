@@ -22,8 +22,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprshell = {
-      url = "github:H3rmt/hyprshell";
+    niri-flake = {
+      url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -35,6 +35,7 @@
       lanzaboote,
       home-manager,
       dms,
+      niri-flake,
       ...
     }:
     let
@@ -59,8 +60,10 @@
             lanzaboote.nixosModules.lanzaboote
             dms.nixosModules.dank-material-shell
             dms.nixosModules.greeter
+            niri-flake.nixosModules.niri
 
             ./modules/base.nix
+            ./modules/niri.nix
             ./hosts/${name}
 
             home-manager.nixosModules.home-manager

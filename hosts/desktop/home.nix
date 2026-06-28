@@ -1,12 +1,10 @@
 { pkgs, inputs, ... }:
 {
   imports = [
-    inputs.hyprshell.homeModules.default
-    ../../modules/home/hyprland.nix
+    ../../modules/home/niri.nix
     ../../modules/home/dms.nix
     ../../modules/home/firefox.nix
     ../../modules/home/must-haves.nix
-    ../../modules/home/hyprshell.nix
   ];
 
   home = {
