@@ -27,9 +27,9 @@
 
   boot.initrd.luks.devices.cryptroot = {
     allowDiscards = true;
-    preLVM = true;
-    # TPM2 unlock via systemd crypttabExtraOpts
-    crypttabExtraOpts = [ "tpm2-device=auto" ];
+    # Bind TPM2 unlock to PCR 0 (firmware) + PCR 7 (Secure Boot state).
+    # After install run: systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+7 /dev/nvme0n1p2
+    crypttabExtraOpts = [ "tpm2-device=auto" "tpm2-pcrs=0+7" ];
   };
 
   boot.initrd.services.lvm.enable = true;
@@ -48,13 +48,20 @@
 
   boot.initrd.systemd.enable = true;
 
-  nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-    trusted-users = [ "qt1" ];
+  nix = {
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      trusted-users = [ "qt1" ];
+      auto-optimise-store = true;
+    };
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
   };
+
+  nixpkgs.config.allowUnfree = true;
 
   users.users.greeter = {
     isSystemUser = true;
@@ -74,11 +81,10 @@
   environment.systemPackages = map lib.lowPrio [
     pkgs.sbctl
     pkgs.tpm2-tools
-    pkgs.tpm-luks
+    pkgs.tpm2-tss
     pkgs.curl
     pkgs.gitMinimal
     pkgs.bash
-    pkgs.tpm2-tss
   ];
 
   system.stateVersion = "26.05";

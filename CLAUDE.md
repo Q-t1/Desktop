@@ -39,15 +39,20 @@ The flake exposes a single `nixosConfigurations.desktop` output, built via the `
 
 1. `disko.nixosModules.disko` — disk layout
 2. `lanzaboote.nixosModules.lanzaboote` — Secure Boot
-3. `modules/base.nix` — hardware/boot/kernel config shared across all hosts (LUKS+LVM, TPM2 auto-unlock, Secure Boot key management via sbctl, ly display manager, openssh)
-4. `modules/noctalia.nix` — adds the Noctalia cachix substituter and installs the Noctalia shell package system-wide
-5. `hosts/<name>/default.nix` — host-specific NixOS config (networking, locale, GPU, users, programs)
-6. `home-manager.nixosModules.home-manager` — wires home-manager as a NixOS module; user config lives at `hosts/<name>/home.nix`
+3. `dms.nixosModules.dank-material-shell` + `dms.nixosModules.greeter` — DankMaterialShell system modules
+4. `niri-flake.nixosModules.niri` — niri Wayland compositor system module
+5. `modules/base.nix` — hardware/boot/kernel config shared across all hosts (LUKS+LVM, TPM2 auto-unlock via PCR 0+7, Secure Boot via sbctl, greetd/DMS greeter, openssh, nix GC)
+6. `modules/niri.nix` — system-level niri config (enables niri, sets package, configures DMS greeter compositor with 144Hz output)
+7. `hosts/<name>/default.nix` — host-specific NixOS config (networking, locale, GPU, users, programs)
+8. `home-manager.nixosModules.home-manager` — wires home-manager as a NixOS module; user config lives at `hosts/<name>/home.nix`
 
-**`hosts/desktop/home.nix`** is the main user-space config. It configures:
-- `niri` (Wayland compositor) via the `niri-flake` home module, including keybinds and monitor layout
-- `noctalia-shell` (status bar / shell overlay) with all its widget and panel settings
-- Noctalia is started automatically at niri startup via `spawn-at-startup`
+**`hosts/desktop/home.nix`** is the main user-space config. It imports:
+- `modules/home/niri.nix` — niri settings (keybinds, 144Hz output, environment, layout) via `niri-flake` home module
+- `modules/home/dms.nix` — DankMaterialShell config (dark theme, dynamic theming, wallpaperCarousel plugin)
+- `modules/home/firefox.nix` — Firefox home config
+- `modules/home/must-haves.nix` — polkit agent, hypridle lock/screen-off
+
+DMS (`spawn-at-startup "dms" "run"`) is started automatically by niri at login.
 
 **`hosts/desktop/disk-config.nix`** defines the disko layout: single NVMe, GPT, 500 MB EFI + LUKS-encrypted LVM volume group with a single ext4 root LV.
 

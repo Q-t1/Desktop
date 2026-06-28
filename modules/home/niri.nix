@@ -47,7 +47,7 @@
       };
 
       outputs."DP-1" = {
-        mode = { width = 3440; height = 1440; refresh = 120.0; };
+        mode = { width = 3440; height = 1440; refresh = 144.0; };
       };
 
       layout = {
