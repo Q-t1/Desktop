@@ -25,6 +25,8 @@
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  boot.initrd.systemd.tpm2.enable = true;
+
   boot.initrd.luks.devices.cryptroot = {
     allowDiscards = true;
     # Bind TPM2 unlock to PCR 0 (firmware) + PCR 7 (Secure Boot state).
