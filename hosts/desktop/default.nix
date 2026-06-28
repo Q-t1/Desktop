@@ -14,6 +14,8 @@
 
   networking.hostName = "desktop-qt1";
 
+  services.gvfs.enable = true;
+
   programs.git = {
     enable = true;
     config = {
