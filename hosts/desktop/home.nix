@@ -8,8 +8,6 @@
   ];
 
   home = {
-    username = "qt1";
-    homeDirectory = "/home/qt1";
     stateVersion = "26.05";
     packages = [ pkgs.deezer-desktop ];
 

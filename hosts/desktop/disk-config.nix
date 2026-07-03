@@ -2,7 +2,9 @@
 {
   disko.devices = {
     disk.disk1 = {
-      device = lib.mkDefault "/dev/nvme0n1";
+      # The system lives on the 465 GB drive. The 931 GB drive is a separate
+      # games/data disk (see modules/storage.nix) and must never be formatted here.
+      device = lib.mkDefault "/dev/nvme1n1";
       type = "disk";
       content = {
         type = "gpt";

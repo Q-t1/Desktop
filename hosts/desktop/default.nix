@@ -6,6 +6,7 @@
     ../../modules/graphics.nix
     ../../modules/locale.nix
     ../../modules/networking.nix
+    ../../modules/storage.nix
     ../../modules/users.nix
     ../../modules/firefox.nix
     ../../modules/fonts.nix

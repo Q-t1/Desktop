@@ -28,11 +28,26 @@
   boot.initrd.systemd.tpm2.enable = true;
 
   boot.initrd.luks.devices.cryptroot = {
+    # Pin the root LUKS container by its header UUID, NOT by partlabel. This host has
+    # two NVMe drives that share the partlabel "disk-disk1-luksroot", so the disko
+    # default (/dev/disk/by-partlabel/…) resolves nondeterministically at boot and
+    # frequently unlocks the wrong disk. by-uuid is globally unique, so unlock is
+    # deterministic. This UUID is nvme1n1p2 (the drive holding pool/root).
+    device = lib.mkForce "/dev/disk/by-uuid/8e7dc6dc-bd69-4632-84d3-b127051c0e54";
     allowDiscards = true;
-    # Bind TPM2 unlock to PCR 0 (firmware) + PCR 7 (Secure Boot state).
-    # After install run: systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+7 /dev/nvme0n1p2
-    crypttabExtraOpts = [ "tpm2-device=auto" "tpm2-pcrs=0+7" ];
+    # TPM2 hardware binding only — no PCR policy so nixos-rebuild / lanzaboote key
+    # re-enrollment never invalidates the token. Secure Boot provides boot integrity.
+    # One-time enrollment (run once, then rebuild — stateful, cannot be declarative):
+    #   sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs= \
+    #     /dev/disk/by-uuid/8e7dc6dc-bd69-4632-84d3-b127051c0e54
+    crypttabExtraOpts = [ "tpm2-device=auto" ];
   };
+
+  # /boot lives on the system drive's own ESP (nvme1n1p1). Pinned by GPT partition
+  # UUID (by-partuuid) so it survives a vfat reformat and never collides with the
+  # data drive. See docs/consolidate-to-single-drive.md for the migration runbook.
+  fileSystems."/boot".device =
+    lib.mkForce "/dev/disk/by-partuuid/74a0c4b2-4359-48a4-9286-8afd40ce6d5d";
 
   boot.initrd.services.lvm.enable = true;
 

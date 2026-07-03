@@ -72,7 +72,8 @@
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
 
-              home-manager.users.qt1 = import ./hosts/${name}/home.nix;
+              home-manager.users.qt1    = import ./hosts/${name}/home.nix;
+              home-manager.users.cecile = import ./hosts/${name}/home.nix;
               home-manager.extraSpecialArgs = { inherit inputs; };
             }
           ]

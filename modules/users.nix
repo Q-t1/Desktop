@@ -5,6 +5,11 @@
     description = "Cécile";
     home = "/home/cecile";
     shell = pkgs.bash;
+    packages = with pkgs; [
+      ghostty
+      firefox
+      nautilus
+    ];
   };
 
   users.users."qt1" = {

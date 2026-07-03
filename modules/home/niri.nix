@@ -1,4 +1,4 @@
-{ config, lib, inputs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 {
   imports = [ inputs.dms.homeModules.niri ];
 
@@ -34,6 +34,7 @@
         ELECTRON_OZONE_PLATFORM_HINT = "auto";
         XCURSOR_THEME                = "Bibata-Modern-Classic";
         XCURSOR_SIZE                 = "24";
+        DISPLAY                      = ":0";
       };
 
       cursor = {
@@ -122,5 +123,20 @@
         # Cycle column width presets
         "Mod+R" = { action = switch-preset-column-width; };
       };
+  };
+
+  home.packages = [ pkgs.xwayland-satellite ];
+
+  systemd.user.services.xwayland-satellite = {
+    Unit = {
+      Description = "XWayland satellite for niri";
+      PartOf      = [ "graphical-session.target" ];
+      After       = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.xwayland-satellite}/bin/xwayland-satellite :0";
+      Restart   = "on-failure";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
 }
