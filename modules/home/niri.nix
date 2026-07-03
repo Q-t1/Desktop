@@ -6,7 +6,7 @@
   # Create empty stubs so niri can parse config on first boot; DMS overwrites them.
   home.activation.createNiriDmsStubs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD mkdir -p "$HOME/.config/niri/dms"
-    for f in alttab colors layout outputs wpblur; do
+    for f in alttab binds colors layout outputs wpblur; do
       if [ ! -f "$HOME/.config/niri/dms/$f.kdl" ]; then
         $DRY_RUN_CMD touch "$HOME/.config/niri/dms/$f.kdl"
       fi
@@ -14,10 +14,14 @@
   '';
 
   programs.dank-material-shell.niri = {
-    enableKeybinds = true;
+    # DMS keybinds arrive via the `dms/binds.kdl` include below, not by merging
+    # them into the niri-flake config. Using enableKeybinds together with the
+    # include mechanism is flagged as redundant, so keep only the include path.
+    enableKeybinds = false;
     enableSpawn    = true;
     includes.filesToInclude = [
       "alttab"
+      "binds"
       "colors"
       "layout"
       "outputs"
