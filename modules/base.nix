@@ -95,6 +95,11 @@
 
   services.openssh.enable = true;
 
+  # Provides a dynamic loader at /lib64/ld-linux-x86-64.so.2 so prebuilt
+  # non-Nix binaries (e.g. downloaded tools, some IDE/game binaries) run
+  # without manual patchelf/FHS wrapping.
+  programs.nix-ld.enable = true;
+
   environment.systemPackages = map lib.lowPrio [
     pkgs.sbctl
     pkgs.tpm2-tools
