@@ -70,6 +70,13 @@
 
       animations = { };
 
+      window-rules = [
+        {
+          matches = [{ app-id = "^Unity$"; }];
+          open-fullscreen = true;
+        }
+      ];
+
       binds = with config.lib.niri.actions; {
         # Apps
         "Mod+T" = { action = spawn "ghostty"; };
