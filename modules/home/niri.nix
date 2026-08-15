@@ -79,6 +79,7 @@
         "Mod+Q"       = { action = close-window; };
         "Mod+W"       = { action = toggle-window-floating; };
         "Mod+Shift+M" = { action = fullscreen-window; };
+        "Mod+Shift+F" = { action = toggle-windowed-fullscreen; };
 
         # Focus — keyboard
         "Mod+Left"  = { action = focus-column-left; };

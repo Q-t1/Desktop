@@ -9,7 +9,7 @@
 
   home = {
     stateVersion = "26.05";
-    packages = [ pkgs.deezer-desktop ];
+    packages = [ pkgs.deezer-desktop pkgs.unityhub ];
 
     pointerCursor = {
       name = "Bibata-Modern-Classic";

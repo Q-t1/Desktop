@@ -2,7 +2,7 @@
 {
   fonts.packages = with pkgs; [
     geist-font
-    jetbrains-mono
+    nerd-fonts.jetbrains-mono
     material-symbols
   ];
 
