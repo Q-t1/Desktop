@@ -70,10 +70,40 @@
 
       animations = { };
 
+      # XWayland clients (via xwayland-satellite) don't get their fullscreen
+      # requests honoured by niri, so force fullscreen at open time instead.
       window-rules = [
         {
           matches = [{ app-id = "^Unity$"; }];
           open-fullscreen = true;
+        }
+
+        # Steam games. Steam exports SDL_VIDEO_X11_WMCLASS=steam_app_<appid>,
+        # so both native and Proton titles show up as "steam_app_1234".
+        # gamescope-wrapped titles show up as "gamescope" instead.
+        {
+          matches = [
+            { app-id = "(?i)^steam_app_[0-9]+$"; }
+            { app-id = "(?i)^gamescope$"; }
+          ];
+          open-fullscreen = true;
+        }
+
+        # Big Picture shares the client's app-id; only the title tells them apart.
+        {
+          matches = [{ app-id = "(?i)^steam$"; title = "Big Picture"; }];
+          open-fullscreen = true;
+        }
+
+        # Steam's helper windows shouldn't claim a tiling column.
+        {
+          matches = [
+            { app-id = "(?i)^steam$"; title = "^Friends List$"; }
+            { app-id = "(?i)^steam$"; title = "^Steam Settings$"; }
+            { app-id = "(?i)^steam$"; title = "^Special Offers$"; }
+            { app-id = "(?i)^steam$"; title = "^notificationtoasts_[0-9]+_desktop$"; }
+          ];
+          open-floating = true;
         }
       ];
 
