@@ -11,6 +11,7 @@
     ../../modules/firefox.nix
     ../../modules/fonts.nix
     ../../modules/gaming.nix
+    ../../modules/logitech.nix
   ];
 
   networking.hostName = "desktop-qt1";
