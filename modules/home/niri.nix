@@ -112,6 +112,16 @@
         "Mod+T" = { action = spawn "ghostty"; };
         "Mod+F" = { action = spawn "firefox"; };
 
+        # Screenshots. The Logitech keyboard's Fn+F8 doesn't emit F8 — it sends
+        # the Windows snip chord Super+Shift+S, so bind that. Print is kept as a
+        # second entry point for keyboards that have a real PrtSc key.
+        # (dot-notation: the screenshot actions take named properties, so they
+        # aren't exposed through lib.niri.actions)
+        "Mod+Shift+S" = { action.screenshot = { }; };
+        "Print"       = { action.screenshot = { }; };
+        "Ctrl+Print"  = { action.screenshot-screen = { }; };
+        "Alt+Print"   = { action.screenshot-window = { }; };
+
         # Window management
         "Mod+Q"       = { action = close-window; };
         "Mod+W"       = { action = toggle-window-floating; };
