@@ -14,6 +14,9 @@
       pkgs.unityhub
       pkgs.discord
       pkgs.blender
+      # blender-mcp server (~/blender_mcp), launched over stdio by Claude Code
+      pkgs.uv
+      pkgs.python3
     ];
 
     pointerCursor = {
