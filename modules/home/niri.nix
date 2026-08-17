@@ -174,6 +174,19 @@
 
         # Cycle column width presets
         "Mod+R" = { action = switch-preset-column-width; };
+
+        # Monitor brightness over DDC/CI (see modules/brightness.nix). DMS ships
+        # these binds itself, but they arrive through `dms/binds.kdl`, which we
+        # don't get since enableKeybinds is false — so drive its IPC directly.
+        # The trailing "" is the device argument: empty means "every display".
+        "XF86MonBrightnessUp" = {
+          action = spawn "dms" "ipc" "call" "brightness" "increment" "5" "";
+          allow-when-locked = true;
+        };
+        "XF86MonBrightnessDown" = {
+          action = spawn "dms" "ipc" "call" "brightness" "decrement" "5" "";
+          allow-when-locked = true;
+        };
       };
   };
 

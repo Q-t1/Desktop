@@ -5,6 +5,8 @@
     description = "Cécile";
     home = "/home/cecile";
     shell = pkgs.bash;
+    # "i2c" — DDC/CI monitor brightness, see modules/brightness.nix.
+    extraGroups = [ "i2c" ];
     packages = with pkgs; [
       ghostty
       firefox
@@ -20,6 +22,10 @@
     extraGroups = [
       "wheel"
       "networkmanager"
+      # DDC/CI monitor brightness, see modules/brightness.nix. Redundant with
+      # the uaccess tag for a local login, but keeps `ddcutil detect` working
+      # over SSH where there's no seat.
+      "i2c"
     ];
     packages = with pkgs; [
       quickshell
