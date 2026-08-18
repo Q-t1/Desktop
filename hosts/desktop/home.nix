@@ -30,6 +30,10 @@
 
   gtk = {
     enable = true;
+    # Pinned sidebar entries in Nautilus (and other GTK file choosers).
+    gtk3.bookmarks = [
+      "file:///mnt/games/shared Shared"
+    ];
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;

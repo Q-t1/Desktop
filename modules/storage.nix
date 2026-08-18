@@ -14,7 +14,10 @@
   };
 
   # Give the primary user ownership of the mountpoint.
+  # /mnt/games/shared is writable by everyone; the sticky bit (1777, like /tmp)
+  # stops users from deleting each other's files.
   systemd.tmpfiles.rules = [
     "d /mnt/games 0755 qt1 users - -"
+    "d /mnt/games/shared 1777 root root - -"
   ];
 }
