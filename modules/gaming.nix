@@ -8,10 +8,12 @@
     gamescopeSession.enable = true;
   };
 
-  # capSysNice lets gamescope raise its scheduling priority for smoother frames.
+  # capSysNice must stay off: the CAP_SYS_NICE security wrapper can't acquire
+  # its capabilities inside Steam's FHS env, so "gamescope -- %command%" launch
+  # options abort before the game starts (nixpkgs#217119).
   programs.gamescope = {
     enable = true;
-    capSysNice = true;
+    capSysNice = false;
   };
 
   programs.gamemode.enable = true;
