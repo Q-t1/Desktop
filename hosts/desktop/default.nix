@@ -21,6 +21,9 @@
 
   programs.git = {
     enable = true;
+    # Installs git-lfs and wires the filter.lfs clean/smudge/process entries
+    # into /etc/gitconfig, so LFS repos work without a per-user `git lfs install`.
+    lfs.enable = true;
     config = {
       user = {
         name = "qt1";
