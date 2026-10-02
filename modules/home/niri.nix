@@ -4,7 +4,7 @@
   # Create empty stubs so niri can parse config on first boot; DMS overwrites them.
   home.activation.createNiriDmsStubs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD mkdir -p "$HOME/.config/niri/dms"
-    for f in alttab binds colors layout outputs wpblur; do
+    for f in alttab binds colors layout outputs windowrules wpblur; do
       if [ ! -f "$HOME/.config/niri/dms/$f.kdl" ]; then
         $DRY_RUN_CMD touch "$HOME/.config/niri/dms/$f.kdl"
       fi
@@ -23,6 +23,7 @@
       "colors"
       "layout"
       "outputs"
+      "windowrules"
       "wpblur"
     ];
   };
@@ -42,6 +43,7 @@
       cursor = {
         theme = "Bibata-Modern-Classic";
         size  = 24;
+        hide-when-typing = true;
       };
 
       input = {
@@ -49,13 +51,21 @@
         focus-follows-mouse.max-scroll-amount = "0%";
       };
 
+      # Ask GTK/Qt apps for server-side decorations, so every window gets the
+      # same niri-drawn corners, focus ring and shadow instead of its own CSD.
+      prefer-no-csd = true;
+
       outputs."DP-1" = {
         mode  = { width = 3440; height = 1440; refresh = 144.0; };
         scale = 1.2;
       };
 
+      # Gaps, corner radius and border/focus-ring width are owned by DMS
+      # (niriLayout*Override in dms.nix → dms/layout.kdl, which is included
+      # after this file and wins); keep these in step so niri's own fallback
+      # matches if that file is ever missing.
       layout = {
-        gaps        = 14;
+        gaps        = 12;
         border.width = 2;
         preset-column-widths = [
           { proportion = 0.5; }
@@ -66,7 +76,22 @@
 
       hotkey-overlay.skip-at-startup = true;
 
-      animations = { };
+      # Slightly softer than niri's defaults: critically damped springs (no
+      # overshoot) with lower stiffness for movement, and longer expo easing
+      # for windows appearing/disappearing.
+      animations = {
+        workspace-switch.kind.spring         = { damping-ratio = 1.0; stiffness = 900; epsilon = 0.0001; };
+        horizontal-view-movement.kind.spring = { damping-ratio = 1.0; stiffness = 700; epsilon = 0.0001; };
+        window-movement.kind.spring          = { damping-ratio = 1.0; stiffness = 700; epsilon = 0.0001; };
+        window-resize.kind.spring            = { damping-ratio = 1.0; stiffness = 700; epsilon = 0.0001; };
+        overview-open-close.kind.spring      = { damping-ratio = 1.0; stiffness = 800; epsilon = 0.0001; };
+        window-open.kind.easing  = { duration-ms = 220; curve = "ease-out-expo"; };
+        window-close.kind.easing = { duration-ms = 180; curve = "ease-out-quad"; };
+      };
+
+      # Workspaces float over DMS's blurred wallpaper (dms/wpblur.kdl) in the
+      # overview; zoom out a little less than the default 0.5 on the ultrawide.
+      overview.zoom = 0.55;
 
       # XWayland clients (via xwayland-satellite) don't get their fullscreen
       # requests honoured by niri, so force fullscreen at open time instead.
@@ -172,6 +197,30 @@
 
         # Cycle column width presets
         "Mod+R" = { action = switch-preset-column-width; };
+
+        # DankMaterialShell. Its own binds would arrive through `dms/binds.kdl`,
+        # which DMS only fills from its Settings UI (enableKeybinds is false, see
+        # above) — so the shell's entry points are bound here, over its IPC.
+        "Mod+Space"   = { action = spawn "dms" "ipc" "call" "launcher" "toggle";      hotkey-overlay.title = "Application launcher"; };
+        "Mod+V"       = { action = spawn "dms" "ipc" "call" "clipboard" "toggle";     hotkey-overlay.title = "Clipboard history"; };
+        "Mod+N"       = { action = spawn "dms" "ipc" "call" "notifications" "toggle"; hotkey-overlay.title = "Notification center"; };
+        "Mod+Comma"   = { action = spawn "dms" "ipc" "call" "settings" "toggle";      hotkey-overlay.title = "DMS settings"; };
+        "Mod+X"       = { action = spawn "dms" "ipc" "call" "powermenu" "toggle";     hotkey-overlay.title = "Power menu"; };
+        "Mod+M"       = { action = spawn "dms" "ipc" "call" "processlist" "toggle";   hotkey-overlay.title = "Process list"; };
+        "Mod+P"       = { action = spawn "dms" "ipc" "call" "notepad" "toggle";       hotkey-overlay.title = "Notepad"; };
+        "Mod+Alt+N"   = { action = spawn "dms" "ipc" "call" "night" "toggle";         hotkey-overlay.title = "Night mode"; allow-when-locked = true; };
+        "Mod+Alt+L"   = { action = spawn "dms" "ipc" "call" "lock" "lock";            hotkey-overlay.title = "Lock screen"; };
+        "Mod+F1"      = { action = spawn "dms" "ipc" "call" "keybinds" "toggle" "niri"; hotkey-overlay.title = "Keybind cheat sheet"; };
+        "Mod+O"       = { action = toggle-overview; repeat = false; };
+
+        # Volume / media through DMS, so they get its OSD.
+        "XF86AudioRaiseVolume" = { action = spawn "dms" "ipc" "call" "audio" "increment" "3"; allow-when-locked = true; };
+        "XF86AudioLowerVolume" = { action = spawn "dms" "ipc" "call" "audio" "decrement" "3"; allow-when-locked = true; };
+        "XF86AudioMute"        = { action = spawn "dms" "ipc" "call" "audio" "mute";          allow-when-locked = true; };
+        "XF86AudioMicMute"     = { action = spawn "dms" "ipc" "call" "audio" "micmute";       allow-when-locked = true; };
+        "XF86AudioPlay"        = { action = spawn "dms" "ipc" "call" "mpris" "playPause";     allow-when-locked = true; };
+        "XF86AudioNext"        = { action = spawn "dms" "ipc" "call" "mpris" "next";          allow-when-locked = true; };
+        "XF86AudioPrev"        = { action = spawn "dms" "ipc" "call" "mpris" "previous";      allow-when-locked = true; };
 
         # Monitor brightness over DDC/CI (see modules/brightness.nix). DMS ships
         # these binds itself, but they arrive through `dms/binds.kdl`, which we

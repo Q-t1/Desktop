@@ -32,7 +32,7 @@ sudo nixos-rebuild switch --flake .#desktop \
 | Output | Consumed by | Contents |
 | --- | --- | --- |
 | `nixosModules.default` | `config/profiles/desktop/configuration.nix` | `modules/base.nix`, `modules/niri.nix`, `hosts/desktop/` and the disko/lanzaboote/DMS/niri-flake modules they need — plus `cecile`'s Home Manager config, since devSystem only wires Home Manager for its own primary user |
-| `homeModules.default` | `config/profiles/desktop/home.nix` | `hosts/desktop/home.nix` (niri settings and keybinds, DMS, Firefox, polkit/hypridle, GTK + cursor) for `qt1` |
+| `homeModules.default` | `config/profiles/desktop/home.nix` | `hosts/desktop/home.nix` (niri settings and keybinds, DMS, Firefox, polkit agent, GTK + cursor) for `qt1` |
 
 Both modules pull the flake inputs they need in `flake.nix` and read no
 `inputs` specialArg, so nothing under `modules/` or `hosts/` assumes anything
@@ -78,9 +78,10 @@ Consequences worth remembering:
 │   ├── niri.nix                     # System-level niri + DMS greeter config
 │   └── home/
 │       ├── niri.nix                 # niri home-manager settings (keybinds, layout, output)
-│       ├── dms.nix                  # DankMaterialShell home config
+│       ├── dms.nix                  # DankMaterialShell home config (Dank Island bar, theme, idle/lock)
+│       ├── wallpaper-carousel.nix   # DMS Wallpaper Carousel plugin + Mod+Shift+W
 │       ├── firefox.nix              # Firefox home config
-│       └── session.nix              # polkit agent, hypridle
+│       └── session.nix              # polkit agent (idle/lock is DMS, in dms.nix)
 └── hosts/
     └── desktop/
         ├── default.nix              # Host-specific config (networking, locale, GPU, users)
@@ -105,7 +106,7 @@ Consequences worth remembering:
 
 Home Manager itself is wired up by devSystem (`home-manager.nixosModules.home-manager`, `useGlobalPkgs`, `useUserPackages`), not here.
 
-`hosts/desktop/home.nix` is the main user-space entrypoint and pulls in `modules/home/niri.nix`, `modules/home/dms.nix`, `modules/home/firefox.nix`, and `modules/home/session.nix`. DMS is started automatically by niri at login via `spawn-at-startup "dms" "run"`.
+`hosts/desktop/home.nix` is the main user-space entrypoint and pulls in `modules/home/niri.nix`, `modules/home/dms.nix`, `modules/home/wallpaper-carousel.nix`, `modules/home/firefox.nix`, and `modules/home/session.nix`. DMS is started automatically by niri at login via `spawn-at-startup "dms" "run"`.
 
 ## Prerequisites
 

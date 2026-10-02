@@ -3,6 +3,7 @@
   imports = [
     ../../modules/home/niri.nix
     ../../modules/home/dms.nix
+    ../../modules/home/wallpaper-carousel.nix
     ../../modules/home/firefox.nix
     ../../modules/home/session.nix
   ];
