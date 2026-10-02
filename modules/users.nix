@@ -1,5 +1,9 @@
 { pkgs, ... }:
 {
+  # qt1's login shell. The shell config itself (and the `coding` function)
+  # comes from devSystem's shared Home Manager base, which only sets up zsh.
+  programs.zsh.enable = true;
+
   users.users."cecile" = {
     isNormalUser = true;
     description = "Cécile";
@@ -18,7 +22,7 @@
     isNormalUser = true;
     description = "Quentin";
     home = "/home/qt1";
-    shell = pkgs.bash;
+    shell = pkgs.zsh;
     extraGroups = [
       "wheel"
       "networkmanager"
