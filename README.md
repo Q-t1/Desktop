@@ -60,7 +60,7 @@ Consequences worth remembering:
 | Disk partitioning | `disko` (single NVMe, GPT, EFI + LUKS-encrypted LVM, ext4 root) |
 | Secure Boot | `lanzaboote` (replaces `systemd-boot`), keys auto-enrolled via `sbctl` |
 | Disk unlock | LUKS root (`cryptroot`) with TPM2 auto-unlock (PCR 0+7) via systemd initrd |
-| Login manager | `greetd` with the DMS greeter |
+| Login manager | `greetd` with the DMS greeter (`dank-greeter`) |
 | Window manager | `niri` (Wayland scrolling compositor) |
 | Shell / bar | DankMaterialShell (dark theme, dynamic theming, wallpaper carousel) |
 | User environment | `home-manager` |
@@ -95,7 +95,8 @@ Consequences worth remembering:
 
 1. `disko.nixosModules.disko` — disk layout
 2. `lanzaboote.nixosModules.lanzaboote` — Secure Boot
-3. `dms.nixosModules.dank-material-shell` + `dms.nixosModules.greeter` — DankMaterialShell system modules
+3. `dms.nixosModules.dank-material-shell` — DankMaterialShell system module
+3. `dank-greeter.nixosModules.default` — the greetd login screen (`programs.dms-greeter`); it used to be `dms.nixosModules.greeter`, which upstream retired into [its own repo](https://github.com/AvengeMedia/dank-greeter)
 4. `niri-flake.nixosModules.niri` — niri Wayland compositor system module
 5. `modules/base.nix` — hardware, boot and kernel config
 6. `modules/niri.nix` — system-level niri config (144Hz output, DMS greeter compositor)

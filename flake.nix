@@ -33,6 +33,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # The greetd login screen. It used to be `dms.nixosModules.greeter`
+    # (`programs.dank-material-shell.greeter`); DankMaterialShell split it out
+    # into its own repo, and that module is now a stub that only warns. The
+    # options are the same, under `programs.dms-greeter`.
+    dank-greeter = {
+      url = "github:AvengeMedia/dank-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     niri-flake = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -40,7 +49,7 @@
   };
 
   outputs =
-    { nixpkgs, disko, lanzaboote, dms, niri-flake, ... }:
+    { nixpkgs, disko, lanzaboote, dms, dank-greeter, niri-flake, ... }:
     let
       # Home Manager config for a human on this host. Pulled in by the consumer
       # for its primary user, and by the NixOS module below for `cecile` (whom
@@ -63,7 +72,7 @@
           disko.nixosModules.disko
           lanzaboote.nixosModules.lanzaboote
           dms.nixosModules.dank-material-shell
-          dms.nixosModules.greeter
+          dank-greeter.nixosModules.default
           niri-flake.nixosModules.niri
 
           ./modules/base.nix

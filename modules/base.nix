@@ -88,7 +88,9 @@
 
   services.greetd.settings.default_session.user = lib.mkDefault "greeter";
 
-  programs.dank-material-shell.greeter = {
+  # The greeter copies qt1's DMS settings/session/colors out of this home, so
+  # the login screen matches his theme and wallpaper.
+  programs.dms-greeter = {
     enable = true;
     configHome = "/home/qt1";
   };

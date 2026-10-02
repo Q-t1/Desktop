@@ -6,7 +6,7 @@
   # DMS registers its own polkit agent; disable niri-flake's duplicate
   systemd.user.services.niri-flake-polkit.enable = false;
 
-  programs.dank-material-shell.greeter.compositor = {
+  programs.dms-greeter.compositor = {
     name = "niri";
     customConfig = ''
       hotkey-overlay {

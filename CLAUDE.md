@@ -84,17 +84,22 @@ each per host.
 
 1. `disko.nixosModules.disko` — disk layout
 2. `lanzaboote.nixosModules.lanzaboote` — Secure Boot
-3. `dms.nixosModules.dank-material-shell` + `dms.nixosModules.greeter`
-4. `niri-flake.nixosModules.niri` — also injects niri's *home* module into
+3. `dms.nixosModules.dank-material-shell`
+4. `dank-greeter.nixosModules.default` — the greetd login screen, configured
+   under `programs.dms-greeter` in `modules/base.nix` (enable + `configHome`)
+   and `modules/niri.nix` (compositor). It used to be
+   `dms.nixosModules.greeter` / `programs.dank-material-shell.greeter`;
+   upstream split it into its own repo and left a stub that only warns
+5. `niri-flake.nixosModules.niri` — also injects niri's *home* module into
    `home-manager.sharedModules`, which is where `programs.niri.settings` comes
    from for both users
-5. `modules/base.nix` — hardware, boot, kernel: LUKS+LVM, TPM2 auto-unlock,
+6. `modules/base.nix` — hardware, boot, kernel: LUKS+LVM, TPM2 auto-unlock,
    Secure Boot via sbctl, the DMS greeter user, openssh, nix GC
-6. `modules/niri.nix` — system-level niri (enables it, DMS greeter compositor
+7. `modules/niri.nix` — system-level niri (enables it, DMS greeter compositor
    with the 144Hz output)
-7. `hosts/desktop/default.nix` — the rest: disk-config plus the per-concern
+8. `hosts/desktop/default.nix` — the rest: disk-config plus the per-concern
    modules (audio, graphics, gaming, storage, users, …), hostname, git
-8. `home-manager.users.cecile` — her Home Manager config, declared in
+9. `home-manager.users.cecile` — her Home Manager config, declared in
    `flake.nix`
 
 ### Home Manager
