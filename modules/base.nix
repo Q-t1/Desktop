@@ -65,12 +65,12 @@
 
   boot.initrd.systemd.enable = true;
 
+  # `experimental-features`, `trusted-users` and the substituters are set by the
+  # consuming flake (devSystem's config/modules/nix-settings.nix), which also
+  # puts Determinate Nix on every NixOS host — so never set `nix.package` here.
+  # What stays is housekeeping no consumer configures.
   nix = {
-    settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      trusted-users = [ "qt1" ];
-      auto-optimise-store = true;
-    };
+    settings.auto-optimise-store = true;
     gc = {
       automatic = true;
       dates = "weekly";
@@ -108,6 +108,4 @@
     pkgs.gitMinimal
     pkgs.bash
   ];
-
-  system.stateVersion = "26.05";
 }

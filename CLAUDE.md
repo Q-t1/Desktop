@@ -4,59 +4,132 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A NixOS flake-based system configuration for a single host (`desktop`). It uses `disko` for declarative disk partitioning, `lanzaboote` for Secure Boot, and `home-manager` for user-level config.
+Everything dedicated to one machine — the `desktop` workstation. It uses
+`disko` for declarative disk partitioning, `lanzaboote` for Secure Boot, and
+ships a niri + DankMaterialShell session.
+
+It exports **modules, not configurations**: there is no
+`nixosConfigurations` output here. The host profile lives in the **devSystem**
+flake (`../devSystem`, `github:Q-t1/devSystem`), at
+`config/profiles/desktop/`, which consumes this flake as the
+`configuration-manager` input. That repo owns the layers shared by every
+machine — Determinate Nix, `nix.settings`, the `claude-code` overlay, the
+shared Home Manager base and the `coding` IDE. This repo owns the host facts.
 
 ## Key commands
 
-**Apply configuration to the running machine (local):**
+A switch always happens from the devSystem checkout:
+
 ```bash
-nixos-rebuild switch --flake .#desktop
+cd ../devSystem
+nix flake update configuration-manager      # after pushing a change here
+sudo nixos-rebuild switch --flake .#desktop
 ```
 
-**Apply to a remote host over SSH:**
+To test uncommitted work in this repo, without pushing:
+
 ```bash
-nixos-rebuild switch --flake .#desktop --target-host user@ip --sudo --ask-sudo-password
+cd ../devSystem
+sudo nixos-rebuild switch --flake .#desktop \
+  --override-input configuration-manager path:/home/qt1/configuration-manager
 ```
 
-**Initial install on a new machine (formats disk + installs):**
-```bash
-nix run github:nix-community/nixos-anywhere -- --flake .#desktop --generate-hardware-config nixos-generate-config ./hosts/desktop/hardware-configuration.nix --target-host user@ip
-```
+Build without switching (same override applies):
 
-**Check a config change without switching:**
 ```bash
+cd ../devSystem
 nix build .#nixosConfigurations.desktop.config.system.build.toplevel
 ```
 
-**Update flake inputs:**
+Bump *this* flake's own inputs (disko, lanzaboote, dms, niri-flake) — then
+`nix flake update configuration-manager` over there to pick them up:
+
 ```bash
 nix flake update
 ```
 
+Initial install on a new machine (formats the disk), run from devSystem:
+
+```bash
+nix run github:nix-community/nixos-anywhere -- --flake .#desktop \
+  --generate-hardware-config nixos-generate-config \
+  /home/qt1/configuration-manager/hosts/desktop/hardware-configuration.nix \
+  --target-host user@ip
+```
+
+Remote switch:
+
+```bash
+nixos-rebuild switch --flake .#desktop --target-host user@ip --sudo --ask-sudo-password
+```
+
 ## Architecture
 
-The flake exposes a single `nixosConfigurations.desktop` output, built via the `mkHost` helper in `flake.nix`. Every host gets this fixed module stack (in order):
+### Flake outputs
+
+- `nixosModules.default` (alias `.desktop`) — the whole system layer, consumed
+  by `config/profiles/desktop/configuration.nix` over there.
+- `homeModules.default` (alias `.desktop`) — `qt1`'s session, consumed by that
+  profile's `home.nix`.
+
+`flake.nix` imports the flake modules these need (disko, lanzaboote, the two
+DMS modules, niri-flake) by closure, and **nothing under `modules/` or
+`hosts/` reads an `inputs` specialArg** — that is what keeps the two repos
+independent. Don't reintroduce one; add the import in `flake.nix` instead.
+
+`nixpkgs` and `home-manager` are `follows`-ed by devSystem, so there is one of
+each per host.
+
+### Module stack (`nixosModules.default`)
 
 1. `disko.nixosModules.disko` — disk layout
 2. `lanzaboote.nixosModules.lanzaboote` — Secure Boot
-3. `dms.nixosModules.dank-material-shell` + `dms.nixosModules.greeter` — DankMaterialShell system modules
-4. `niri-flake.nixosModules.niri` — niri Wayland compositor system module
-5. `modules/base.nix` — hardware/boot/kernel config shared across all hosts (LUKS+LVM, TPM2 auto-unlock via PCR 0+7, Secure Boot via sbctl, greetd/DMS greeter, openssh, nix GC)
-6. `modules/niri.nix` — system-level niri config (enables niri, sets package, configures DMS greeter compositor with 144Hz output)
-7. `hosts/<name>/default.nix` — host-specific NixOS config (networking, locale, GPU, users, programs)
-8. `home-manager.nixosModules.home-manager` — wires home-manager as a NixOS module; user config lives at `hosts/<name>/home.nix`
+3. `dms.nixosModules.dank-material-shell` + `dms.nixosModules.greeter`
+4. `niri-flake.nixosModules.niri` — also injects niri's *home* module into
+   `home-manager.sharedModules`, which is where `programs.niri.settings` comes
+   from for both users
+5. `modules/base.nix` — hardware, boot, kernel: LUKS+LVM, TPM2 auto-unlock,
+   Secure Boot via sbctl, the DMS greeter user, openssh, nix GC
+6. `modules/niri.nix` — system-level niri (enables it, DMS greeter compositor
+   with the 144Hz output)
+7. `hosts/desktop/default.nix` — the rest: disk-config plus the per-concern
+   modules (audio, graphics, gaming, storage, users, …), hostname, git
+8. `home-manager.users.cecile` — her Home Manager config, declared in
+   `flake.nix`
 
-**`hosts/desktop/home.nix`** is the main user-space config. It imports:
-- `modules/home/niri.nix` — niri settings (keybinds, 144Hz output, environment, layout) via `niri-flake` home module
-- `modules/home/dms.nix` — DankMaterialShell config (dark theme, dynamic theming, wallpaperCarousel plugin)
-- `modules/home/firefox.nix` — Firefox home config
-- `modules/home/session.nix` — polkit agent, hypridle lock/screen-off
+### Home Manager
+
+Home Manager is wired up by devSystem (as a NixOS module, `useGlobalPkgs`,
+`useUserPackages`). For `qt1` the stack is:
+
+1. devSystem's `config/common/home.nix` — zsh, starship, git identity,
+   neovim, the `coding` IDE
+2. devSystem's `config/profiles/desktop/home.nix` — picks the IDE's clipboard
+   provider, then imports:
+3. `homeModules.default` here → `hosts/desktop/home.nix`, which imports
+   `modules/home/{niri,dms,firefox,session}.nix`
+
+`cecile` gets only step 3 (via `flake.nix`), deliberately: no shared base, no
+IDE. Her `home.stateVersion` is set there; `qt1`'s comes from devSystem.
 
 DMS (`spawn-at-startup "dms" "run"`) is started automatically by niri at login.
 
-**`hosts/desktop/disk-config.nix`** defines the disko layout: single NVMe, GPT, 500 MB EFI + LUKS-encrypted LVM volume group with a single ext4 root LV.
+### What must NOT be set here
 
-**`hosts/desktop/hardware-configuration.nix`** is auto-generated by `nixos-generate-config` during initial install — do not hand-edit it.
+- `nix.package` — devSystem puts Determinate Nix on every NixOS host.
+- `nix.settings.{experimental-features,trusted-users,substituters}` — owned by
+  devSystem's `config/modules/nix-settings.nix`. Only housekeeping no consumer
+  configures stays in `modules/base.nix` (`auto-optimise-store`, `nix.gc`).
+- `system.stateVersion` and `networking.hostName` — the profile's, over there.
+- `home.{stateVersion,username,homeDirectory}` for `qt1` — devSystem's wiring.
+
+**`hosts/desktop/disk-config.nix`** defines the disko layout: single NVMe, GPT,
+500 MB EFI + LUKS-encrypted LVM volume group with a single ext4 root LV.
+
+**`hosts/desktop/hardware-configuration.nix`** is auto-generated by
+`nixos-generate-config` during initial install — do not hand-edit it. It is
+currently imported by nothing: `modules/base.nix` carries the same kernel
+modules plus the by-uuid/by-partuuid device pins this host needs.
 
 ## Secure Boot / TPM2 notes
 
@@ -66,6 +139,6 @@ DMS (`spawn-at-startup "dms" "run"`) is started automatically by niri at login.
 
 ## Adding a new host
 
-1. Create `hosts/<name>/` with `default.nix`, `home.nix`, `disk-config.nix`.
-2. Add `<name> = mkHost { name = "<name>"; };` to `nixosConfigurations` in `flake.nix`.
-3. Run nixos-anywhere for initial install, then `nixos-rebuild switch` for subsequent updates.
+Not here — this flake *is* the `desktop` host. A second machine gets its own
+`config/profiles/<name>/` in devSystem (and its own flake if it needs one); see
+that repo's CLAUDE.md.

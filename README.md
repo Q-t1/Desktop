@@ -1,6 +1,57 @@
 # Desktop
 
-A flake-based [NixOS](https://nixos.org/) system configuration for a single host (`desktop`). It uses [`disko`](https://github.com/nix-community/disko) for declarative disk partitioning, [`lanzaboote`](https://github.com/nix-community/lanzaboote) for UEFI Secure Boot, [`home-manager`](https://github.com/nix-community/home-manager) for user-level configuration, and ships a [niri](https://github.com/YaLTeR/niri) Wayland session styled with [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell).
+Everything dedicated to one host: the `desktop` workstation. It uses [`disko`](https://github.com/nix-community/disko) for declarative disk partitioning, [`lanzaboote`](https://github.com/nix-community/lanzaboote) for UEFI Secure Boot, [`home-manager`](https://github.com/nix-community/home-manager) for user-level configuration, and ships a [niri](https://github.com/YaLTeR/niri) Wayland session styled with [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell).
+
+This repo holds **no `nixosConfigurations`**. The host *profile* lives in the
+[devSystem](https://github.com/Q-t1/devSystem) flake — `config/profiles/desktop/` —
+which owns the OS-wide layers every machine shares (Determinate Nix, nix
+settings, the `claude-code` overlay, the shared Home Manager base and the
+`coding` IDE) and consumes this flake as the `configuration-manager` input.
+What stays here is only what is true of *this machine*: its hardware, disks and
+boot chain, GPU, audio, gaming, fonts, locale, networking, its two user
+accounts, and the niri + DMS session.
+
+So: rebuild from devSystem, not from here.
+
+```bash
+cd ../devSystem
+nix flake update configuration-manager      # after pushing a change here
+sudo nixos-rebuild switch --flake .#desktop
+```
+
+To try an uncommitted change in this repo before pushing it:
+
+```bash
+cd ../devSystem
+sudo nixos-rebuild switch --flake .#desktop \
+  --override-input configuration-manager path:/home/qt1/configuration-manager
+```
+
+## What this flake exports
+
+| Output | Consumed by | Contents |
+| --- | --- | --- |
+| `nixosModules.default` | `config/profiles/desktop/configuration.nix` | `modules/base.nix`, `modules/niri.nix`, `hosts/desktop/` and the disko/lanzaboote/DMS/niri-flake modules they need — plus `cecile`'s Home Manager config, since devSystem only wires Home Manager for its own primary user |
+| `homeModules.default` | `config/profiles/desktop/home.nix` | `hosts/desktop/home.nix` (niri settings and keybinds, DMS, Firefox, polkit/hypridle, GTK + cursor) for `qt1` |
+
+Both modules pull the flake inputs they need in `flake.nix` and read no
+`inputs` specialArg, so nothing under `modules/` or `hosts/` assumes anything
+about the consumer. `nixpkgs` and `home-manager` are `follows`-ed by devSystem,
+so there is one of each per host.
+
+Consequences worth remembering:
+
+- Never set `nix.package` here: devSystem puts Determinate Nix on every NixOS
+  host. `experimental-features`, `trusted-users` and the substituters are its
+  `config/modules/nix-settings.nix`'s job too.
+- `system.stateVersion` and `networking.hostName` belong to the profile over
+  there, following that repo's convention.
+- `home.stateVersion`, `home.username` and `home.homeDirectory` for `qt1` come
+  from devSystem's Home Manager wiring. `cecile` gets hers from
+  `flake.nix` here, because that repo doesn't know she exists — and she
+  deliberately does *not* get devSystem's shared Home Manager base.
+- `pkgs.claude-code` (in `modules/users.nix`) resolves to devSystem's overlay
+  build, not the nixpkgs one.
 
 ## Stack
 
@@ -19,7 +70,7 @@ A flake-based [NixOS](https://nixos.org/) system configuration for a single host
 
 ```
 .
-├── flake.nix                        # Flake inputs/outputs, mkHost helper
+├── flake.nix                        # Flake inputs; exports nixosModules/homeModules
 ├── flake.lock
 ├── docs/                            # Additional documentation
 ├── modules/
@@ -40,16 +91,18 @@ A flake-based [NixOS](https://nixos.org/) system configuration for a single host
 
 ## Architecture
 
-The flake exposes a single `nixosConfigurations.desktop` output, built through the `mkHost` helper in `flake.nix`. Every host is assembled from a fixed module stack, in order:
+`nixosModules.default` is a fixed module stack, in order:
 
 1. `disko.nixosModules.disko` — disk layout
 2. `lanzaboote.nixosModules.lanzaboote` — Secure Boot
 3. `dms.nixosModules.dank-material-shell` + `dms.nixosModules.greeter` — DankMaterialShell system modules
 4. `niri-flake.nixosModules.niri` — niri Wayland compositor system module
-5. `modules/base.nix` — hardware/boot/kernel config shared across hosts
+5. `modules/base.nix` — hardware, boot and kernel config
 6. `modules/niri.nix` — system-level niri config (144Hz output, DMS greeter compositor)
-7. `hosts/<name>/default.nix` — host-specific config
-8. `home-manager.nixosModules.home-manager` — wires home-manager as a NixOS module; per-user config at `hosts/<name>/home.nix`
+7. `hosts/desktop/default.nix` — the rest of the host: networking, locale, GPU, users, programs
+8. `home-manager.users.cecile` — her session, since devSystem only wires its own primary user
+
+Home Manager itself is wired up by devSystem (`home-manager.nixosModules.home-manager`, `useGlobalPkgs`, `useUserPackages`), not here.
 
 `hosts/desktop/home.nix` is the main user-space entrypoint and pulls in `modules/home/niri.nix`, `modules/home/dms.nix`, `modules/home/firefox.nix`, and `modules/home/session.nix`. DMS is started automatically by niri at login via `spawn-at-startup "dms" "run"`.
 
@@ -69,33 +122,15 @@ nix run github:nix-community/nixos-anywhere -- \
   --target-host user@ip
 ```
 
-This partitions the disk per `disko`, generates `hardware-configuration.nix`, and installs the `desktop` configuration.
+This partitions the disk per `disko`, generates `hardware-configuration.nix`, and installs the `desktop` configuration. Run it from the devSystem checkout — that is where `.#desktop` lives; `--generate-hardware-config` still writes into this repo, which is where the host's hardware facts belong.
 
 ## Updating an existing machine
 
-**Locally, on the machine itself:**
-
-```bash
-nixos-rebuild switch --flake .#desktop
-```
-
-**Remotely, over SSH:**
-
-```bash
-nixos-rebuild switch --flake .#desktop --target-host user@ip --sudo --ask-sudo-password
-```
-
-**Check that a change builds without switching:**
-
-```bash
-nix build .#nixosConfigurations.desktop.config.system.build.toplevel
-```
-
-**Update flake inputs:**
-
-```bash
-nix flake update
-```
+See the commands at the top of this file: a switch is always
+`nixos-rebuild switch --flake .#desktop` from the devSystem checkout. Only
+`nix flake update` (to bump *this* flake's own inputs — disko, lanzaboote, dms,
+niri-flake) is run here, and it needs a `nix flake update configuration-manager`
+over there to take effect.
 
 ## Secure Boot / TPM2 notes
 
@@ -105,17 +140,13 @@ nix flake update
 
 ## Adding a new host
 
-1. Create `hosts/<name>/` with `default.nix`, `home.nix`, and `disk-config.nix`.
-2. Add it to `nixosConfigurations` in `flake.nix`:
-   ```nix
-   nixosConfigurations = {
-     desktop = mkHost { name = "desktop"; };
-     "<name>" = mkHost { name = "<name>"; };
-   };
-   ```
-3. Run `nixos-anywhere` for the initial install, then use `nixos-rebuild switch` for subsequent updates.
+Don't — not here. This flake is the `desktop` host. A second machine gets its
+own profile in devSystem (`config/profiles/<name>/`), and its own flake if it
+needs one.
 
 ## Notes
 
-- `hosts/desktop/hardware-configuration.nix` is auto-generated during install — don't hand-edit it.
+- `hosts/desktop/hardware-configuration.nix` is auto-generated during install — don't hand-edit it. Note it is not imported by anything: `modules/base.nix` carries the same kernel-module facts, with the boot/root device paths this host actually needs (see the comments there).
+- The first switch after a host moves onto Determinate Nix needs two extra
+  flags; see devSystem's README.
 - See `CLAUDE.md` for a more detailed architecture reference intended for AI coding assistants working in this repo.

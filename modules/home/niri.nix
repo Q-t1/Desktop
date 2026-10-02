@@ -1,7 +1,5 @@
-{ config, lib, pkgs, inputs, ... }:
+{ config, lib, pkgs, ... }:
 {
-  imports = [ inputs.dms.homeModules.niri ];
-
   # DMS generates dms/*.kdl at runtime, but niri needs them to exist at startup.
   # Create empty stubs so niri can parse config on first boot; DMS overwrites them.
   home.activation.createNiriDmsStubs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

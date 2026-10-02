@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ../../modules/home/niri.nix
@@ -7,8 +7,9 @@
     ../../modules/home/session.nix
   ];
 
+  # `home.stateVersion`, username and homeDirectory come from the consuming
+  # flake's Home Manager wiring (see README.md).
   home = {
-    stateVersion = "26.05";
     packages = [
       pkgs.deezer-desktop
       pkgs.unityhub
